@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Aureo.Api/Aureo.Api.csproj" />
+  <Project Path="Aureo.Application/Aureo.Application.csproj" />
+  <Project Path="Aureo.Domain/Aureo.Domain.csproj" />
+  <Project Path="Aureo.Infrastructure/Aureo.Infrastructure.csproj" />
+  <Project Path="Aureo.Tests/Aureo.Tests.csproj" />
+</Solution>
