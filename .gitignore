@@ -497,8 +497,6 @@ secrets.json
 *.pem
 *.crt
 *.cer
-.claude/settings.local.json
-.claude/
 *.log
 *.bak
 *.sql
