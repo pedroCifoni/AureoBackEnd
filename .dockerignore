@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.vs/
+.git/
+Aureo.Tests/
+*.md
+Dockerfile
+.dockerignore
+**/appsettings.Development.json
+**/secrets.json

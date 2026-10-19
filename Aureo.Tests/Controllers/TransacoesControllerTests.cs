@@ -1,7 +1,8 @@
-﻿// Aureo.Tests/Controllers/TransacoesControllerTests.cs
+// Aureo.Tests/Controllers/TransacoesControllerTests.cs
 using Aureo.Application.DTOs.Transacao;
 using Aureo.Application.Interfaces;
 using Aureo.Api.Controllers;
+using Aureo.Domain.Common;
 using Aureo.Domain.Entities;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -37,26 +38,42 @@ namespace Aureo.Tests.Controllers
         }
 
         [Fact]
-        public async Task ObterTodas_DeveRetornar200ComLista()
+        public async Task Listar_DeveRetornar200ComPagina()
         {
             // Arrange
-            var transacoes = new List<TransacaoResponseDto>
+            var itens = new List<TransacaoResponseDto>
             {
                 new(Guid.NewGuid(), "Salário", "Receita", 4500m, TipoTransacao.Receita, DateTime.UtcNow),
                 new(Guid.NewGuid(), "Supermercado", "Alimentação", 200m, TipoTransacao.Despesa, DateTime.UtcNow)
             };
+            var pagina = new PagedResult<TransacaoResponseDto>(itens, 1, 20, 2);
+            var query = new ListarTransacoesQuery();
 
             _serviceMock
-                .Setup(s => s.ObterTodasAsync(_usuarioId))
-                .ReturnsAsync(transacoes);
+                .Setup(s => s.ListarAsync(_usuarioId, query))
+                .ReturnsAsync(pagina);
 
             // Act
-            var result = await _controller.ObterTodas();
+            var result = await _controller.Listar(query);
 
             // Assert
             var ok = result.Should().BeOfType<OkObjectResult>().Subject;
             ok.StatusCode.Should().Be(200);
-            ok.Value.Should().BeEquivalentTo(transacoes);
+            ok.Value.Should().BeEquivalentTo(pagina);
+        }
+
+        [Fact]
+        public async Task Atualizar_DeveRetornar200ComTransacaoAtualizada()
+        {
+            var id = Guid.NewGuid();
+            var dto = new AtualizarTransacaoDto("Salário", "Receita", 5000m, TipoTransacao.Receita, DateTime.UtcNow);
+            var response = new TransacaoResponseDto(id, "Salário", "Receita", 5000m, TipoTransacao.Receita, dto.Data);
+
+            _serviceMock.Setup(s => s.AtualizarAsync(id, _usuarioId, dto)).ReturnsAsync(response);
+
+            var result = await _controller.Atualizar(id, dto);
+
+            result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(response);
         }
 
         [Fact]

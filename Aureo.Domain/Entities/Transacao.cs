@@ -1,4 +1,5 @@
-﻿using Aureo.Domain.Exceptions;
+﻿using Aureo.Domain.Common;
+using Aureo.Domain.Exceptions;
 
 namespace Aureo.Domain.Entities
 {
@@ -24,10 +25,26 @@ namespace Aureo.Domain.Entities
             DateTime data,
             Guid usuarioId)
         {
-            if (string.IsNullOrWhiteSpace(descricao) || descricao.Length > 200)
+            var transacao = new Transacao
+            {
+                Id = Guid.NewGuid(),
+                UsuarioId = usuarioId
+            };
+            transacao.Atualizar(descricao, categoria, valor, tipo, data);
+            return transacao;
+        }
+
+        public void Atualizar(
+            string descricao,
+            string categoria,
+            decimal valor,
+            TipoTransacao tipo,
+            DateTime data)
+        {
+            if (string.IsNullOrWhiteSpace(descricao) || descricao.Trim().Length > 200)
                 throw new DominioException("Descrição é obrigatória (máx. 200 caracteres).");
 
-            if (string.IsNullOrWhiteSpace(categoria) || categoria.Length > 100)
+            if (string.IsNullOrWhiteSpace(categoria) || categoria.Trim().Length > 100)
                 throw new DominioException("Categoria é obrigatória (máx. 100 caracteres).");
 
             if (valor <= 0)
@@ -39,25 +56,12 @@ namespace Aureo.Domain.Entities
             if (data == default)
                 throw new DominioException("Data é obrigatória.");
 
-            return new Transacao
-            {
-                Id = Guid.NewGuid(),
-                Descricao = descricao.Trim(),
-                Categoria = categoria.Trim(),
-                Valor = valor,
-                Tipo = tipo,
-                Data = NormalizarUtc(data),
-                UsuarioId = usuarioId
-            };
+            Descricao = descricao.Trim();
+            Categoria = categoria.Trim();
+            Valor = valor;
+            Tipo = tipo;
+            Data = DataUtc.Normalizar(data);
         }
-
-        // Npgsql (timestamptz) rejeita Kind Unspecified/Local.
-        private static DateTime NormalizarUtc(DateTime data) => data.Kind switch
-        {
-            DateTimeKind.Utc => data,
-            DateTimeKind.Local => data.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(data, DateTimeKind.Utc)
-        };
     }
 
     public enum TipoTransacao

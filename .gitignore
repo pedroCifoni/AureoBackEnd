@@ -480,3 +480,28 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+## Aureo: segredos e arquivos locais (nunca versionar)
+.env
+.env.*
+!.env.example
+*.env
+secrets.json
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Production.json
+**/appsettings.*.local.json
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+*.cer
+.claude/settings.local.json
+.claude/
+*.log
+*.bak
+*.sql
+
+## Nao versionar: documentacao local
+*.md

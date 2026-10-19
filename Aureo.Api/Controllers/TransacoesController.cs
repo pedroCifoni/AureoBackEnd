@@ -20,10 +20,10 @@ namespace Aureo.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObterTodas()
+        public async Task<IActionResult> Listar([FromQuery] ListarTransacoesQuery query)
         {
-            var transacoes = await _transacaoService.ObterTodasAsync(ObterUsuarioId());
-            return Ok(transacoes);
+            var resultado = await _transacaoService.ListarAsync(ObterUsuarioId(), query);
+            return Ok(resultado);
         }
 
         [HttpGet("{id:guid}")]
@@ -38,6 +38,13 @@ namespace Aureo.Api.Controllers
         {
             var resultado = await _transacaoService.CriarAsync(ObterUsuarioId(), dto);
             return CreatedAtAction(nameof(ObterPorId), new { id = resultado.Id }, resultado);
+        }
+
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Atualizar(Guid id, [FromBody] AtualizarTransacaoDto dto)
+        {
+            var resultado = await _transacaoService.AtualizarAsync(id, ObterUsuarioId(), dto);
+            return Ok(resultado);
         }
 
         [HttpDelete("{id:guid}")]
