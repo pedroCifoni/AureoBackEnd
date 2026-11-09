@@ -20,6 +20,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ITransacaoRepository, TransacaoRepository>();
 builder.Services.AddScoped<ITransacaoService, TransacaoService>();
 
@@ -75,6 +77,7 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi(options =>
@@ -116,13 +119,16 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// Em produção o proxy do host termina o HTTPS; redirecionar aqui quebraria o health check.
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseCors("ReactPolicy");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

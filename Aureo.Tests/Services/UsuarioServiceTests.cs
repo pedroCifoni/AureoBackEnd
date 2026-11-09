@@ -14,6 +14,7 @@ namespace Aureo.Tests.Services
     public class UsuarioServiceTests
     {
         private readonly Mock<IUsuarioRepository> _repoMock = new();
+        private readonly Mock<ICategoriaRepository> _categoriaRepoMock = new();
         private readonly UsuarioService _service;
 
         public UsuarioServiceTests()
@@ -27,7 +28,7 @@ namespace Aureo.Tests.Services
                 })
                 .Build();
 
-            _service = new UsuarioService(_repoMock.Object, config);
+            _service = new UsuarioService(_repoMock.Object, _categoriaRepoMock.Object, config);
         }
 
         [Fact]
@@ -43,6 +44,23 @@ namespace Aureo.Tests.Services
             salvo!.Email.Should().Be("a@b.com");
             salvo.SenhaHash.Should().NotBe("senha-forte-1");
             salvo.SenhaHash.Length.Should().BeGreaterThan(64);
+        }
+
+        [Fact]
+        public async Task CadastrarAsync_DeveCriarCategoriasPadraoDoUsuario()
+        {
+            Usuario? salvo = null;
+            List<Categoria>? categorias = null;
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Usuario>()))
+                .Callback<Usuario>(u => salvo = u).Returns(Task.CompletedTask);
+            _categoriaRepoMock.Setup(r => r.AddRangeAsync(It.IsAny<IEnumerable<Categoria>>(), It.IsAny<CancellationToken>()))
+                .Callback<IEnumerable<Categoria>, CancellationToken>((c, _) => categorias = c.ToList())
+                .Returns(Task.CompletedTask);
+
+            await _service.CadastrarAsync(new CriarUsuarioDto { Nome = "pedro", Email = "a@b.com", Senha = "senha-forte-1" });
+
+            categorias.Should().NotBeNullOrEmpty();
+            categorias!.Should().OnlyContain(c => c.UsuarioId == salvo!.Id);
         }
 
         [Fact]

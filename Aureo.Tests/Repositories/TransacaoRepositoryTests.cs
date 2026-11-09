@@ -30,19 +30,30 @@ namespace Aureo.Tests.Repositories
 
         private static TransacaoFiltro Filtro(
             DateTime? inicio = null, DateTime? fim = null, TipoTransacao? tipo = null,
-            string? categoria = null, string? busca = null,
+            Guid? categoriaId = null, string? busca = null,
             OrdenacaoTransacao ordenar = OrdenacaoTransacao.Data, bool desc = true,
             int pagina = 1, int tamanho = 20)
-            => new(inicio, fim, tipo, categoria, busca, ordenar, desc, pagina, tamanho);
+            => new(inicio, fim, tipo, categoriaId, busca, ordenar, desc, pagina, tamanho);
+
+        private Categoria _renda = null!;
+        private Categoria _alimentacao = null!;
+        private Categoria _lazer = null!;
+        private Categoria _rendaAlheia = null!;
 
         private async Task SeedAsync()
         {
+            _renda = Categoria.Criar("Renda", TipoTransacao.Receita, null, null, _usuarioId);
+            _alimentacao = Categoria.Criar("Alimentação", TipoTransacao.Despesa, null, null, _usuarioId);
+            _lazer = Categoria.Criar("Lazer", TipoTransacao.Despesa, null, null, _usuarioId);
+            _rendaAlheia = Categoria.Criar("Renda", TipoTransacao.Receita, null, null, _outroUsuarioId);
+            _context.Categorias.AddRange(_renda, _alimentacao, _lazer, _rendaAlheia);
+
             _context.Transacoes.AddRange(
-                Transacao.Criar("Salário", "Renda", 5000m, TipoTransacao.Receita, Dia(5), _usuarioId),
-                Transacao.Criar("Supermercado", "Alimentação", 300m, TipoTransacao.Despesa, Dia(10), _usuarioId),
-                Transacao.Criar("Padaria", "Alimentação", 20m, TipoTransacao.Despesa, Dia(15), _usuarioId),
-                Transacao.Criar("Cinema", "Lazer", 60m, TipoTransacao.Despesa, Dia(20), _usuarioId),
-                Transacao.Criar("Alheia", "Renda", 999m, TipoTransacao.Receita, Dia(10), _outroUsuarioId));
+                Transacao.Criar("Salário", _renda, 5000m, TipoTransacao.Receita, Dia(5), _usuarioId),
+                Transacao.Criar("Supermercado", _alimentacao, 300m, TipoTransacao.Despesa, Dia(10), _usuarioId),
+                Transacao.Criar("Padaria", _alimentacao, 20m, TipoTransacao.Despesa, Dia(15), _usuarioId),
+                Transacao.Criar("Cinema", _lazer, 60m, TipoTransacao.Despesa, Dia(20), _usuarioId),
+                Transacao.Criar("Alheia", _rendaAlheia, 999m, TipoTransacao.Receita, Dia(10), _outroUsuarioId));
             await _context.SaveChangesAsync();
         }
 
@@ -100,13 +111,24 @@ namespace Aureo.Tests.Repositories
         }
 
         [Fact]
-        public async Task ListarAsync_FiltraPorCategoriaSemDiferenciarCaixa()
+        public async Task ListarAsync_FiltraPorCategoria()
         {
             await SeedAsync();
 
-            var resultado = await _repository.ListarAsync(_usuarioId, Filtro(categoria: "ALIMENTAÇÃO"));
+            var resultado = await _repository.ListarAsync(_usuarioId, Filtro(categoriaId: _alimentacao.Id));
 
             resultado.Total.Should().Be(2);
+            resultado.Itens.Should().OnlyContain(t => t.Categoria.Nome == "Alimentação");
+        }
+
+        [Fact]
+        public async Task ListarAsync_CarregaNomeDaCategoria()
+        {
+            await SeedAsync();
+
+            var resultado = await _repository.ListarAsync(_usuarioId, Filtro(tipo: TipoTransacao.Receita));
+
+            resultado.Itens.Should().ContainSingle().Which.Categoria.Nome.Should().Be("Renda");
         }
 
         [Fact]
@@ -146,14 +168,16 @@ namespace Aureo.Tests.Repositories
         public async Task UpdateAsync_PersisteAlteracoes()
         {
             await SeedAsync();
-            var transacao = await _context.Transacoes.FirstAsync(t => t.Descricao == "Padaria");
-            transacao.Atualizar("Padaria nova", "Alimentação", 25m, TipoTransacao.Despesa, Dia(15));
+            var padaria = await _context.Transacoes.AsNoTracking().FirstAsync(t => t.Descricao == "Padaria");
+            var transacao = await _repository.GetByIdAsync(padaria.Id, _usuarioId);
+            transacao!.Atualizar("Padaria nova", _lazer, 25m, TipoTransacao.Despesa, Dia(15));
 
             await _repository.UpdateAsync(transacao);
 
             var salva = await _context.Transacoes.AsNoTracking().FirstAsync(t => t.Id == transacao.Id);
             salva.Descricao.Should().Be("Padaria nova");
             salva.Valor.Should().Be(25m);
+            salva.CategoriaId.Should().Be(_lazer.Id);
         }
     }
 }

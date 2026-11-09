@@ -10,8 +10,7 @@ namespace Aureo.Application.DTOs.Transacao
         public DateTime? DataFim { get; set; }
         public TipoTransacao? Tipo { get; set; }
 
-        [StringLength(100)]
-        public string? Categoria { get; set; }
+        public Guid? CategoriaId { get; set; }
 
         [StringLength(200)]
         public string? Busca { get; set; }

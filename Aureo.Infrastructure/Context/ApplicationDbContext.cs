@@ -15,6 +15,7 @@ namespace Aureo.Infrastructure.Context
         
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Transacao> Transacoes { get; set; }
+        public DbSet<Categoria> Categorias { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -36,6 +37,24 @@ namespace Aureo.Infrastructure.Context
                 entity.HasIndex(e => e.Email).IsUnique();
             });
 
+            modelBuilder.Entity<Categoria>(entity =>
+            {
+                entity.ToTable("Categorias");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Nome).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Tipo).IsRequired();
+                entity.Property(e => e.Cor).IsRequired().HasMaxLength(7);
+                entity.Property(e => e.Icone).HasMaxLength(50);
+
+                entity.HasOne<Usuario>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UsuarioId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.UsuarioId, e.Nome, e.Tipo }).IsUnique();
+            });
+
             modelBuilder.Entity<Transacao>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -43,10 +62,6 @@ namespace Aureo.Infrastructure.Context
                 entity.Property(e => e.Descricao)
                     .IsRequired()
                     .HasMaxLength(200);
-
-                entity.Property(e => e.Categoria)
-                    .IsRequired()
-                    .HasMaxLength(100);
 
                 entity.Property(e => e.Valor)
                     .HasColumnType("numeric(18,2)")
@@ -60,7 +75,14 @@ namespace Aureo.Infrastructure.Context
                     .HasForeignKey(e => e.UsuarioId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Restrict: categoria em uso não pode sumir (o service devolve 409 antes de chegar aqui).
+                entity.HasOne(e => e.Categoria)
+                    .WithMany()
+                    .HasForeignKey(e => e.CategoriaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(e => new { e.UsuarioId, e.Data });
+                entity.HasIndex(e => e.CategoriaId);
             });
         }
     }

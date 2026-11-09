@@ -26,6 +26,7 @@ namespace Aureo.Infrastructure.Repositories
         {
             var query = _context.Transacoes
                 .AsNoTracking()
+                .Include(t => t.Categoria)
                 .Where(t => t.UsuarioId == usuarioId);
 
             if (filtro.DataInicio is { } inicio)
@@ -37,11 +38,8 @@ namespace Aureo.Infrastructure.Repositories
             if (filtro.Tipo is { } tipo)
                 query = query.Where(t => t.Tipo == tipo);
 
-            if (!string.IsNullOrWhiteSpace(filtro.Categoria))
-            {
-                var categoria = filtro.Categoria.Trim().ToLower();
-                query = query.Where(t => t.Categoria.ToLower() == categoria);
-            }
+            if (filtro.CategoriaId is { } categoriaId)
+                query = query.Where(t => t.CategoriaId == categoriaId);
 
             if (!string.IsNullOrWhiteSpace(filtro.Busca))
             {
@@ -71,12 +69,13 @@ namespace Aureo.Infrastructure.Repositories
         public async Task<Transacao?> GetByIdAsync(Guid id, Guid usuarioId)
         {
             return await _context.Transacoes
+                .Include(t => t.Categoria)
                 .FirstOrDefaultAsync(t => t.Id == id && t.UsuarioId == usuarioId);
         }
 
+        // A entidade já vem rastreada de GetByIdAsync; Update() marcaria também a Categoria como modificada.
         public async Task UpdateAsync(Transacao transacao)
         {
-            _context.Transacoes.Update(transacao);
             await _context.SaveChangesAsync();
         }
 

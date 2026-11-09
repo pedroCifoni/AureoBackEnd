@@ -16,12 +16,17 @@ namespace Aureo.Application.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly ICategoriaRepository _categoriaRepository;
         private readonly IConfiguration _configuration;
         private readonly PasswordHasher<Usuario> _hasher = new();
 
-        public UsuarioService(IUsuarioRepository usuarioRepository, IConfiguration configuration)
+        public UsuarioService(
+            IUsuarioRepository usuarioRepository,
+            ICategoriaRepository categoriaRepository,
+            IConfiguration configuration)
         {
             _usuarioRepository = usuarioRepository;
+            _categoriaRepository = categoriaRepository;
             _configuration = configuration;
         }
 
@@ -40,6 +45,8 @@ namespace Aureo.Application.Services
             novoUsuario.AtualizarSenhaHash(_hasher.HashPassword(novoUsuario, dto.Senha));
 
             await _usuarioRepository.AddAsync(novoUsuario);
+            // Duas escritas separadas até o IUnitOfWork (Fase 3); sem categorias o usuário ainda cria as suas.
+            await _categoriaRepository.AddRangeAsync(Categoria.CriarPadroes(novoUsuario.Id));
 
             return new CriarUsuarioResponseDto
             {

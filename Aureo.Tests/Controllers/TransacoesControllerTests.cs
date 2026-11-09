@@ -17,6 +17,7 @@ namespace Aureo.Tests.Controllers
         private readonly Mock<ITransacaoService> _serviceMock;
         private readonly TransacoesController _controller;
         private readonly Guid _usuarioId = Guid.NewGuid();
+        private readonly Guid _categoriaId = Guid.NewGuid();
 
         public TransacoesControllerTests()
         {
@@ -43,8 +44,8 @@ namespace Aureo.Tests.Controllers
             // Arrange
             var itens = new List<TransacaoResponseDto>
             {
-                new(Guid.NewGuid(), "Salário", "Receita", 4500m, TipoTransacao.Receita, DateTime.UtcNow),
-                new(Guid.NewGuid(), "Supermercado", "Alimentação", 200m, TipoTransacao.Despesa, DateTime.UtcNow)
+                new(Guid.NewGuid(), "Salário", _categoriaId, "Renda", 4500m, TipoTransacao.Receita, DateTime.UtcNow),
+                new(Guid.NewGuid(), "Supermercado", _categoriaId, "Alimentação", 200m, TipoTransacao.Despesa, DateTime.UtcNow)
             };
             var pagina = new PagedResult<TransacaoResponseDto>(itens, 1, 20, 2);
             var query = new ListarTransacoesQuery();
@@ -66,8 +67,8 @@ namespace Aureo.Tests.Controllers
         public async Task Atualizar_DeveRetornar200ComTransacaoAtualizada()
         {
             var id = Guid.NewGuid();
-            var dto = new AtualizarTransacaoDto("Salário", "Receita", 5000m, TipoTransacao.Receita, DateTime.UtcNow);
-            var response = new TransacaoResponseDto(id, "Salário", "Receita", 5000m, TipoTransacao.Receita, dto.Data);
+            var dto = new AtualizarTransacaoDto("Salário", _categoriaId, 5000m, TipoTransacao.Receita, DateTime.UtcNow);
+            var response = new TransacaoResponseDto(id, "Salário", _categoriaId, "Renda", 5000m, TipoTransacao.Receita, dto.Data);
 
             _serviceMock.Setup(s => s.AtualizarAsync(id, _usuarioId, dto)).ReturnsAsync(response);
 
@@ -80,8 +81,8 @@ namespace Aureo.Tests.Controllers
         public async Task Criar_DeveRetornar201ComTransacaoCriada()
         {
             // Arrange
-            var dto = new CriarTransacaoDto("Salário", "Receita", 4500m, TipoTransacao.Receita, DateTime.UtcNow);
-            var response = new TransacaoResponseDto(Guid.NewGuid(), "Salário", "Receita", 4500m, TipoTransacao.Receita, DateTime.UtcNow);
+            var dto = new CriarTransacaoDto("Salário", _categoriaId, 4500m, TipoTransacao.Receita, DateTime.UtcNow);
+            var response = new TransacaoResponseDto(Guid.NewGuid(), "Salário", _categoriaId, "Renda", 4500m, TipoTransacao.Receita, DateTime.UtcNow);
 
             _serviceMock
                 .Setup(s => s.CriarAsync(_usuarioId, dto))

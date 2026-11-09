@@ -12,7 +12,7 @@ namespace Aureo.Domain.Filtros
         DateTime? DataInicio,
         DateTime? DataFim,
         TipoTransacao? Tipo,
-        string? Categoria,
+        Guid? CategoriaId,
         string? Busca,
         OrdenacaoTransacao OrdenarPor,
         bool Decrescente,

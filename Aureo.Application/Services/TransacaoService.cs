@@ -2,6 +2,7 @@
 using Aureo.Application.Interfaces;
 using Aureo.Domain.Common;
 using Aureo.Domain.Entities;
+using Aureo.Domain.Exceptions;
 using Aureo.Domain.Filtros;
 using Aureo.Domain.Interfaces;
 
@@ -10,17 +11,21 @@ namespace Aureo.Application.Services
     public class TransacaoService : ITransacaoService
     {
         private readonly ITransacaoRepository _repository;
+        private readonly ICategoriaRepository _categoriaRepository;
 
-        public TransacaoService(ITransacaoRepository repository)
+        public TransacaoService(ITransacaoRepository repository, ICategoriaRepository categoriaRepository)
         {
             _repository = repository;
+            _categoriaRepository = categoriaRepository;
         }
 
         public async Task<TransacaoResponseDto> CriarAsync(Guid usuarioId, CriarTransacaoDto dto)
         {
+            var categoria = await ObterCategoriaAsync(dto.CategoriaId, usuarioId);
+
             var transacao = Transacao.Criar(
                 dto.Descricao,
-                dto.Categoria,
+                categoria,
                 dto.Valor,
                 dto.Tipo,
                 dto.Data,
@@ -38,7 +43,7 @@ namespace Aureo.Application.Services
                 query.DataInicio is { } inicio ? DataUtc.Normalizar(inicio) : null,
                 query.DataFim is { } fim ? DataUtc.Normalizar(fim) : null,
                 query.Tipo,
-                query.Categoria,
+                query.CategoriaId,
                 query.Busca,
                 query.OrdenarPor,
                 query.Decrescente,
@@ -62,7 +67,9 @@ namespace Aureo.Application.Services
             var transacao = await _repository.GetByIdAsync(id, usuarioId)
                 ?? throw new KeyNotFoundException("Transação não encontrada.");
 
-            transacao.Atualizar(dto.Descricao, dto.Categoria, dto.Valor, dto.Tipo, dto.Data);
+            var categoria = await ObterCategoriaAsync(dto.CategoriaId, usuarioId);
+
+            transacao.Atualizar(dto.Descricao, categoria, dto.Valor, dto.Tipo, dto.Data);
             await _repository.UpdateAsync(transacao);
 
             return ToDto(transacao);
@@ -76,10 +83,18 @@ namespace Aureo.Application.Services
             await _repository.DeleteAsync(transacao);
         }
 
+        // Categoria de outro usuário se comporta como inexistente (nunca vaza que existe).
+        private async Task<Categoria> ObterCategoriaAsync(Guid categoriaId, Guid usuarioId)
+        {
+            return await _categoriaRepository.GetByIdAsync(categoriaId, usuarioId)
+                ?? throw new DominioException("Categoria inválida.");
+        }
+
         private static TransacaoResponseDto ToDto(Transacao t) => new(
             t.Id,
             t.Descricao,
-            t.Categoria,
+            t.CategoriaId,
+            t.Categoria.Nome,
             t.Valor,
             t.Tipo,
             t.Data
