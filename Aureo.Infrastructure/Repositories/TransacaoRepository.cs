@@ -29,6 +29,27 @@ namespace Aureo.Infrastructure.Repositories
                 .Include(t => t.Categoria)
                 .Where(t => t.UsuarioId == usuarioId);
 
+            return await PaginarAsync(query, filtro, CancellationToken.None);
+        }
+
+        public async Task<PagedResult<Transacao>> ListarTodasAsync(
+            Guid? usuarioId, TransacaoFiltro filtro, CancellationToken ct = default)
+        {
+            var query = _context.Transacoes
+                .AsNoTracking()
+                .Include(t => t.Categoria)
+                .Include(t => t.Usuario)
+                .AsQueryable();
+
+            if (usuarioId is { } id)
+                query = query.Where(t => t.UsuarioId == id);
+
+            return await PaginarAsync(query, filtro, ct);
+        }
+
+        private static async Task<PagedResult<Transacao>> PaginarAsync(
+            IQueryable<Transacao> query, TransacaoFiltro filtro, CancellationToken ct)
+        {
             if (filtro.DataInicio is { } inicio)
                 query = query.Where(t => t.Data >= inicio);
 
@@ -47,7 +68,7 @@ namespace Aureo.Infrastructure.Repositories
                 query = query.Where(t => t.Descricao.ToLower().Contains(busca));
             }
 
-            var total = await query.CountAsync();
+            var total = await query.CountAsync(ct);
 
             // Id como desempate mantém a paginação estável.
             query = (filtro.OrdenarPor, filtro.Decrescente) switch
@@ -61,7 +82,7 @@ namespace Aureo.Infrastructure.Repositories
             var itens = await query
                 .Skip((filtro.Pagina - 1) * filtro.Tamanho)
                 .Take(filtro.Tamanho)
-                .ToListAsync();
+                .ToListAsync(ct);
 
             return new PagedResult<Transacao>(itens, filtro.Pagina, filtro.Tamanho, total);
         }

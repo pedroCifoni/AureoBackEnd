@@ -110,6 +110,9 @@ namespace Aureo.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("Papel")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasColumnType("text");

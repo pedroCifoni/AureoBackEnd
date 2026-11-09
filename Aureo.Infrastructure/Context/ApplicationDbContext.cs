@@ -32,6 +32,7 @@ namespace Aureo.Infrastructure.Context
                 entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
                 entity.Property(e => e.SenhaHash).IsRequired();
                 entity.Property(e => e.CriadoEm).IsRequired();
+                entity.Property(e => e.Papel).IsRequired();
 
                 entity.HasIndex(e => e.Nome).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();

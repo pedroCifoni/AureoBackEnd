@@ -1,4 +1,4 @@
-﻿using Aureo.Application.DTOs;
+using Aureo.Application.DTOs;
 using Aureo.Application.Interfaces;
 using Aureo.Domain.Entities;
 using Aureo.Domain.Exceptions;
@@ -68,6 +68,7 @@ namespace Aureo.Application.Services
             {
                 Nome = usuario.Nome,
                 Email = usuario.Email,
+                Papel = usuario.Papel,
                 Token = GerarTokenJwt(usuario)
             };
         }
@@ -112,7 +113,8 @@ namespace Aureo.Application.Services
                 {
                     new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                     new Claim(ClaimTypes.Name, usuario.Nome),
-                    new Claim(ClaimTypes.Email, usuario.Email)
+                    new Claim(ClaimTypes.Email, usuario.Email),
+                    new Claim(ClaimTypes.Role, usuario.Papel.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 Issuer = _configuration["Jwt:Issuer"],

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using Aureo.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace Aureo.Application.DTOs
 {
@@ -15,6 +16,7 @@ namespace Aureo.Application.DTOs
     {
         public string Nome { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public PapelUsuario Papel { get; set; }
         public string Token { get; set; } = string.Empty;
     }
 }

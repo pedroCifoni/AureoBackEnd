@@ -102,6 +102,35 @@ namespace Aureo.Tests.Services
         }
 
         [Fact]
+        public async Task LoginAsync_DeveIncluirPapelNaRespostaENoToken()
+        {
+            Usuario? salvo = null;
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Usuario>()))
+                .Callback<Usuario>(u => salvo = u).Returns(Task.CompletedTask);
+            await _service.CadastrarAsync(new CriarUsuarioDto { Nome = "pedro", Email = "a@b.com", Senha = "senha-forte-1" });
+            salvo!.AtualizarDados("pedro", "a@b.com", PapelUsuario.Admin);
+            _repoMock.Setup(r => r.ObterPorNomeAsync("pedro")).ReturnsAsync(salvo);
+
+            var resultado = await _service.LoginAsync(new LoginDto { Nome = "pedro", Senha = "senha-forte-1" });
+
+            resultado.Papel.Should().Be(PapelUsuario.Admin);
+            var jwt = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(resultado.Token);
+            jwt.Claims.Should().Contain(c => c.Type == "role" && c.Value == "Admin");
+        }
+
+        [Fact]
+        public async Task CadastrarAsync_UsuarioNovoNasceSemPrivilegio()
+        {
+            Usuario? salvo = null;
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Usuario>()))
+                .Callback<Usuario>(u => salvo = u).Returns(Task.CompletedTask);
+
+            await _service.CadastrarAsync(new CriarUsuarioDto { Nome = "pedro", Email = "a@b.com", Senha = "senha-forte-1" });
+
+            salvo!.Papel.Should().Be(PapelUsuario.Usuario);
+        }
+
+        [Fact]
         public async Task LoginAsync_SenhaErrada_DeveLancarNaoAutorizado()
         {
             Usuario? salvo = null;
